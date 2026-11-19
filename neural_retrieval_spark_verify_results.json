@@ -1,0 +1,113 @@
+{
+  "dataset": "fs437",
+  "package_file": "/home/dev/fs437data/fs437_export/fs437_package.hdf5",
+  "component": "pure_python_inverted_index",
+  "mitre_rpr_invoked": false,
+  "electrodes": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "index_terms": 53229,
+  "index_build_seconds": 0.05461962101981044,
+  "hit_queries": [
+    {
+      "query": "single electrode",
+      "terms": [
+        "electrode:0"
+      ],
+      "index_result_count": 1171,
+      "scan_result_count": 1171,
+      "exact_match": true,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "median_ms": 0.05139200948178768,
+      "p95_ms": 0.16089598648250103,
+      "scan_time_ms": 32.35414600931108
+    },
+    {
+      "query": "two electrodes AND",
+      "terms": [
+        "electrode:0",
+        "electrode:1"
+      ],
+      "index_result_count": 0,
+      "scan_result_count": 0,
+      "exact_match": true,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "median_ms": 0.006400048732757568,
+      "p95_ms": 0.02646399661898613,
+      "scan_time_ms": 32.06491400487721
+    },
+    {
+      "query": "stimulation + electrode",
+      "terms": [
+        "stimulation",
+        "electrode:0"
+      ],
+      "index_result_count": 381,
+      "scan_result_count": 381,
+      "exact_match": true,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "median_ms": 0.027520000003278255,
+      "p95_ms": 0.08190399967133999,
+      "scan_time_ms": 32.23993896972388
+    },
+    {
+      "query": "event + electrode",
+      "terms": [
+        "event",
+        "electrode:0"
+      ],
+      "index_result_count": 0,
+      "scan_result_count": 0,
+      "exact_match": true,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "median_ms": 0.00014400575309991837,
+      "p95_ms": 0.001584063284099102,
+      "scan_time_ms": 31.942833098582923
+    }
+  ],
+  "miss_control": {
+    "terms": [
+      "electrode:999"
+    ],
+    "index_result_count": 0,
+    "scan_result_count": 0,
+    "exact_match": true,
+    "median_ms": 0.0001280568540096283,
+    "p95_ms": 0.0008479692041873932
+  }
+}

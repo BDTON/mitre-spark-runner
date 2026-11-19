@@ -1,0 +1,7 @@
+query,terms,result_count,median_ms,p95_ms,min_ms,max_ms,platform
+single_electrode,electrode:0,1171,0.0514,0.1609,0.0001,0.1609,Spark-ARM64
+stimulation_plus_electrode,stimulation electrode:0,381,0.0275,0.0819,0.0001,0.0819,Spark-ARM64
+non_existent_electrode,electrode:999,0,0.0001,0.0008,0.0001,0.0008,Spark-ARM64
+single_electrode,electrode:0,1171,0.1304,0.1519,0.1142,0.1519,Windows-x86_64
+stimulation_plus_electrode,stimulation electrode:0,381,0.0635,0.1235,0.0576,0.1235,Windows-x86_64
+non_existent_electrode,electrode:999,0,0.0002,0.0026,0.0001,0.0026,Windows-x86_64
