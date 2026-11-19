@@ -80,7 +80,7 @@ def benchmark_bm25s(corpus_size, seed=8001):
     print("  Indexing with BM25S...")
     idx_start = time.time()
     retriever = bm25s.BM25()
-    retriever.index(corpus_tok.ids)
+    retriever.index(corpus_tok)
     idx_time = (time.time() - idx_start) * 1000
     print(f"  Indexing: {idx_time:.1f} ms")
     
@@ -204,6 +204,6 @@ if __name__ == "__main__":
             }
     
     # Save results
-    with open('/home/dev/python_comparison_results.json', 'w') as f:
+    with open('python_comparison_results.json', 'w') as f:
         json.dump(results, f, indent=2)
-    print("\nResults saved to /home/dev/python_comparison_results.json")
+    print("\nResults saved to python_comparison_results.json")

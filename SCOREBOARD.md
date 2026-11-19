@@ -13,8 +13,8 @@
 | Comparator | Version | Ingest (ms) | Index Build (ms) | Query Median (ms) | Query p95 (ms) | QPS | Memory (MB) | Status |
 |------------|---------|-------------|------------------|-------------------|----------------|-----|-------------|--------|
 | MITRE (optimized, CSR) | Goose b66f0f86 | 62 | 58 | 0.32–0.49 | — | ~2840 | 18 | ✅ Complete |
-| BM25S | bm25s 0.3.16 | 25.3 | 60.2 | 0.04–0.05 | ~0.05 | — | — | ✅ Complete |
-| rank_bm25 | rank-bm25 0.2.2 | 12.1 | 17.6 | 0.60–1.66 | ~1.66 | — | — | ✅ Complete |
+| BM25S | bm25s 0.3.16 | 45.7 | 89.4 | 0.54–0.58 | ~0.61 | — | — | ✅ Complete |
+| rank_bm25 | rank-bm25 0.2.2 | 15.0 | 22.6 | 1.00–2.79 | ~3.52 | — | — | ✅ Complete |
 | SQLite FTS5 | SQLite 3.x | 23.9 | — | 4.74 (single-term) | ~4.93 | — | — | ✅ Complete* |
 
 *\*SQLite FTS5 multi-term phrase queries return 0 results due to FTS5 phrase-matching limitation.*
@@ -23,12 +23,12 @@
 
 | Query | MITRE | BM25S | rank_bm25 | SQLite FTS5 |
 |-------|-------|-------|-----------|-------------|
-| nile (high freq) | 0.32–0.49 | 0.04 | 0.60 | 4.74 |
-| pharaoh (med freq) | 0.32–0.49 | 0.04 | 0.60 | 4.74 |
-| ziggurat (low freq) | 0.32–0.49 | 0.04 | 0.63 | 4.74 |
-| nile pharaoh (2-term) | 0.32–0.49 | 0.04 | 1.02 | 0.50* |
-| egypt greece rome (3-term) | 0.32–0.49 | 0.04 | 1.51 | 0.09* |
-| orphan-fact-nile-decree | 0.32–0.49 | 0.04 | 1.65 | 0.01* |
+| nile (high freq) | 0.32–0.49 | 0.56 | 1.02 | 4.74 |
+| pharaoh (med freq) | 0.32–0.49 | 0.58 | 1.30 | 4.74 |
+| ziggurat (low freq) | 0.32–0.49 | 0.56 | 1.00 | 4.74 |
+| nile pharaoh (2-term) | 0.32–0.49 | 0.00 | 1.39 | 0.50* |
+| egypt greece rome (3-term) | 0.32–0.49 | 0.00 | 2.24 | 0.09* |
+| orphan-fact-nile-decree | 0.32–0.49 | 0.54 | 2.79 | 0.01* |
 
 *\*FTS5 phrase matching — returns 0 results.*
 
@@ -39,20 +39,20 @@
 | Comparator | Version | Ingest (ms) | Index Build (ms) | Query Median (ms) | Query p95 (ms) | QPS | Memory (MB) | Status |
 |------------|---------|-------------|------------------|-------------------|----------------|-----|-------------|--------|
 | MITRE (optimized, CSR) | Goose b66f0f86 | 344 | 651 | 3.25–4.88 | ~4.88 | ~2810 | 182 | ✅ Complete |
-| BM25S | bm25s 0.3.16 | 260.3 | 601.0 | 0.14–0.15 | ~0.15 | — | — | ✅ Complete |
-| rank_bm25 | rank-bm25 0.2.2 | 139.0 | 209.4 | 6.9–25 | ~25 | — | — | ✅ Complete |
+| BM25S | bm25s 0.3.16 | 379.1 | 855.0 | 0.80–2.12 | ~3.86 | — | — | ✅ Complete |
+| rank_bm25 | rank-bm25 0.2.2 | 157.3 | 270.6 | 11.39–86.18 | ~87.27 | — | — | ✅ Complete |
 | SQLite FTS5 | SQLite 3.x | 277.3 | — | 49 (single-term) | ~52 | — | — | ✅ Complete* |
 
 **Query latency breakdown (median ms, 10 iterations):**
 
 | Query | MITRE | BM25S | rank_bm25 | SQLite FTS5 |
 |-------|-------|-------|-----------|-------------|
-| nile (high freq) | 3.25–4.88 | 0.14 | 6.91 | 49.03 |
-| pharaoh (med freq) | 3.25–4.88 | 0.14 | 6.98 | 49.11 |
-| ziggurat (low freq) | 3.25–4.88 | 0.14 | 8.27 | 49.15 |
-| nile pharaoh (2-term) | 3.25–4.88 | 0.14 | 13.41 | 4.96* |
-| egypt greece rome (3-term) | 3.25–4.88 | 0.14 | 23.71 | 0.70* |
-| orphan-fact-nile-decree | 3.25–4.88 | 0.14 | 20.28 | 0.01* |
+| nile (high freq) | 3.25–4.88 | 1.94 | 11.39 | 49.03 |
+| pharaoh (med freq) | 3.25–4.88 | 1.52 | 27.27 | 49.11 |
+| ziggurat (low freq) | 3.25–4.88 | 1.68 | 20.01 | 49.15 |
+| nile pharaoh (2-term) | 3.25–4.88 | 1.75 | 44.67 | 4.96* |
+| egypt greece rome (3-term) | 3.25–4.88 | 0.80 | 73.55 | 0.70* |
+| orphan-fact-nile-decree | 3.25–4.88 | 1.79 | 86.18 | 0.01* |
 
 **100K index build comparison:**
 - MITRE baseline (pre-optimization): 37.7s → Optimized: 0.65s (57x speedup)
@@ -65,7 +65,7 @@
 | Comparator | Version | Ingest (ms) | Index Build (ms) | Query Median (ms) | Query p95 (ms) | QPS | Memory (MB) | Status |
 |------------|---------|-------------|------------------|-------------------|----------------|-----|-------------|--------|
 | MITRE (optimized, CSR) | Goose b66f0f86 | 3480 | 7347 | 35.85–52.18 | ~52.18 | — | — | ⚠️ Query OK, Concurrent QPS CRASH |
-| BM25S | bm25s 0.3.16 | 2988.7 | 6094.0 | 1.14–1.19 | ~1.19 | — | — | ✅ Complete |
+| BM25S | bm25s 0.3.16 | 6500.8 | 20160.3 | 13.24–40.78 | ~46.16 | — | — | ✅ Complete |
 | rank_bm25 | rank-bm25 0.2.2 | 1906.3 | 2217.5 | 84.31–279.35 | ~279.35 | — | — | ✅ Complete |
 | SQLite FTS5 | SQLite 3.x | 3730.9 | — | 554 (single-term) | ~557 | — | — | ✅ Complete* |
 
@@ -73,12 +73,12 @@
 
 | Query | MITRE | BM25S | rank_bm25 | SQLite FTS5 |
 |-------|-------|-------|-----------|-------------|
-| nile (high freq) | 35.85–52.18 | 1.16 | 84.31 | 553.95 |
-| pharaoh (med freq) | 35.85–52.18 | 1.15 | 88.13 | 553.85 |
-| ziggurat (low freq) | 35.85–52.18 | 1.15 | 108.84 | 554.67 |
-| nile pharaoh (2-term) | 35.85–52.18 | 1.14 | 149.68 | 50.21* |
-| egypt greece rome (3-term) | 35.85–52.18 | 1.14 | 279.35 | 6.60* |
-| orphan-fact-nile-decree | 35.85–52.18 | 1.14 | 266.50 | 0.02* |
+| nile (high freq) | 35.85–52.18 | 35.70 | 84.31 | 553.95 |
+| pharaoh (med freq) | 35.85–52.18 | 37.77 | 88.13 | 553.85 |
+| ziggurat (low freq) | 35.85–52.18 | 36.11 | 108.84 | 554.67 |
+| nile pharaoh (2-term) | 35.85–52.18 | 40.78 | 149.68 | 50.21* |
+| egypt greece rome (3-term) | 35.85–52.18 | 13.24 | 279.35 | 6.60* |
+| orphan-fact-nile-decree | 35.85–52.18 | 33.25 | 266.50 | 0.02* |
 
 **1M issue:** MITRE concurrent QPS test crashes with data stack overflow (2GB GS_STACK_RESERVE exceeded). Query benchmarks complete successfully.
 
@@ -101,10 +101,10 @@
 
 | Rank | Comparator | Query Median (ms) | Index Build (ms) | Memory (MB) | Verdict |
 |------|-----------|-------------------|------------------|-------------|---------|
-| 1 | BM25S | 0.14–0.15 | 601.0 | — | Fastest pure BM25 scorer |
-| 2 | MITRE (optimized) | 3.25–4.88 | 651 | 182 | Full RPR + PRISM evidence chain; 23–35x slower queries than BM25S |
+| 1 | BM25S | 0.80–2.12 | 855.0 | — | Fastest pure BM25 scorer |
+| 2 | MITRE (optimized) | 3.25–4.88 | 651 | 182 | Full RPR + PRISM evidence chain; ~2–6x slower queries than BM25S |
 | 3 | SQLite FTS5 | 49 (single-term) | — | — | Phrase matching limitation |
-| 4 | rank_bm25 | 6.9–25 | 209.4 | — | Query latency grows with term count |
+| 4 | rank_bm25 | 11.39–86.18 | 270.6 | — | Query latency grows with term count |
 
 ---
 
