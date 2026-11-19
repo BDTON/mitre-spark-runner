@@ -1,0 +1,3 @@
+nile	10
+river	10
+pharaoh	10

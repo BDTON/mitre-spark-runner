@@ -472,6 +472,7 @@ enum RPR_Event {
 
 var rpr_queue: RPR_Event[>..] = [];
 var rpr_head: u32 = 0;
+var rpr_events_processed: u32 = 0;
 
 fn rpr_queue_clear() {
     rpr_queue.clear();
@@ -546,6 +547,8 @@ fn rpr_pulse(max_events: u32) -> SearchResult[>..] {
             },
         }
     }
+
+    rpr_events_processed = processed as u32;
 
     for did in active_docs {
         let idx = did as i64;
@@ -700,8 +703,49 @@ fn main() {
         return;
     }
 
+    // Warm-up queries (untimed) - separate file so none of the scored
+    // questions are consumed by warm-up
+    var warmup_content: u8[>..] = [];
+    if read_file("warmup_queries.txt", warmup_content) {
+        var ws: u32 = 0;
+        var wi: u32 = 0;
+        while wi <= warmup_content.len {
+            if wi == warmup_content.len || warmup_content[wi] == '\n' {
+                if wi > ws {
+                    var wtab: u32 = 0;
+                    var wfound = false;
+                    for j in ws..wi {
+                        if warmup_content[j] == '\t' { wtab = j; wfound = true; break; }
+                        if warmup_content[j] == '\r' { continue; }
+                    }
+                    if wfound {
+                        var wqtext: u8[>..] = [];
+                        for j in ws..wtab {
+                            if warmup_content[j] != '\r' { wqtext.push(warmup_content[j]); }
+                        }
+                        var wk_val: u32 = 0;
+                        for j in (wtab + 1)..wi {
+                            let c = warmup_content[j];
+                            if c >= '0' && c <= '9' { wk_val = wk_val * 10 + (c - '0') as u32; }
+                        }
+                        var wqbuf: u8[>..] = [];
+                        for j in 0..wqtext.len { wqbuf.push(wqtext[j]); }
+                        let wqterms = tokenize(wqbuf[..]);
+                        score_query_fast(wqterms, wk_val);
+                        rpr_search(wqterms, 10000);
+                        evidence_pool.clear();
+                    }
+                }
+                ws = wi + 1;
+            }
+            wi += 1;
+        }
+    }
+
     // Output header - no {} placeholders (Goose print/format don't substitute in AOT)
     var hdr: u8[>..] = [];
+    format(hdr, "rep");
+    hdr.push('\t');
     format(hdr, "query");
     hdr.push('\t');
     format(hdr, "k");
@@ -721,51 +765,53 @@ fn main() {
     format(hdr, "csr_failed");
     hdr.push('\t');
     format(hdr, "rpr_failed");
+    hdr.push('\t');
+    format(hdr, "rpr_events");
     hdr.push('\n');
     print(hdr);
 
-    var query_count: u32 = 0;
+    var rep_count: u32 = 3;
     var line_start: u32 = 0;
-    var i: u32 = 0;
 
-    while i <= content.len {
-        if i == content.len || content[i] == '\n' {
-            if i > line_start {
-                // Find tab in this line
-                var tab_pos: u32 = 0;
-                var found_tab = false;
-                for j in line_start..i {
-                    if content[j] == '\t' { tab_pos = j; found_tab = true; break; }
-                    if content[j] == '\r' { break; }
-                }
-                if found_tab {
-                    query_count += 1;
+    for rep in 0..rep_count {
+        var i: u32 = 0;
+        line_start = 0;
 
-                    // Build query text
-                    var qtext: u8[>..] = [];
-                    for j in line_start..tab_pos {
-                        if content[j] != '\r' { qtext.push(content[j]); }
+        while i <= content.len {
+            if i < content.len && content[i] == '\r' {
+                i += 1;
+                continue;
+            }
+            if i == content.len || content[i] == '\n' {
+                if i > line_start {
+                    // Find tab in this line
+                    var tab_pos: u32 = 0;
+                    var found_tab = false;
+                    for j in line_start..i {
+                        if content[j] == '\t' { tab_pos = j; found_tab = true; break; }
+                        if content[j] == '\r' { continue; }
                     }
-                    // Parse k
-                    var k_val: u32 = 0;
-                    for j in (tab_pos + 1)..i {
-                        let c = content[j];
-                        if c >= '0' && c <= '9' {
-                            k_val = k_val * 10 + (c - '0') as u32;
+                    if found_tab {
+
+                        // Build query text
+                        var qtext: u8[>..] = [];
+                        for j in line_start..tab_pos {
+                            if content[j] != '\r' { qtext.push(content[j]); }
                         }
-                    }
+                        // Parse k
+                        var k_val: u32 = 0;
+                        for j in (tab_pos + 1)..i {
+                            let c = content[j];
+                            if c >= '0' && c <= '9' {
+                                k_val = k_val * 10 + (c - '0') as u32;
+                            }
+                        }
 
-                    // Tokenize
-                    var qbuf: u8[>..] = [];
-                    for j in 0..qtext.len { qbuf.push(qtext[j]); }
-                    let qterms = tokenize(qbuf[..]);
+                        // Tokenize
+                        var qbuf: u8[>..] = [];
+                        for j in 0..qtext.len { qbuf.push(qtext[j]); }
+                        let qterms = tokenize(qbuf[..]);
 
-                    // Warm-up: first 3 queries untimed
-                    if query_count <= 3 {
-                        score_query_fast(qterms, k_val);
-                        rpr_search(qterms, 10000);
-                        evidence_pool.clear();
-                    } else {
                         // CSR diagnostic - 10 iterations
                         var csr_lats: f64[>..] = [];
                         var csr_doc_ids: u64[>..] = [];
@@ -800,6 +846,8 @@ fn main() {
 
                         // Output result line - concatenate values without {} placeholders
                         var out: u8[>..] = [];
+                        format(out, rep);
+                        out.push('\t');
                         format(out, qtext);
                         out.push('\t');
                         format(out, k_val);
@@ -819,6 +867,8 @@ fn main() {
                         format(out, if csr_failed { 1 } else { 0 });
                         out.push('\t');
                         format(out, if rpr_failed { 1 } else { 0 });
+                        out.push('\t');
+                        format(out, rpr_events_processed);
                         // CSR doc IDs (top-k, comma-separated)
                         out.push('\t');
                         for di in 0..csr_doc_ids.len {
@@ -832,21 +882,45 @@ fn main() {
                             if di > 0 { out.push(','); }
                             format(out, rpr_doc_ids[di]);
                         }
+                        // Passage text: top 10 readable source passages with IDs (| separated)
+                        out.push('\t');
+                        let passage_count = if rpr_top10 < 10 { rpr_top10 } else { 10 };
+                        for di in 0..passage_count {
+                            let doc_id = rpr_doc_ids[di];
+                            if di > 0 { out.push('|'); }
+                            format(out, doc_id);
+                            out.push(':');
+                            // Find doc text in doc_pool
+                            var found = false;
+                            for di2 in 0..doc_pool.len {
+                                let de = &doc_pool[di2 as i64];
+                                if de.id == doc_id {
+                                    let text = de.text;
+                                    let text_len = if text.len > 200 { 200 } else { text.len };
+                                    for j in 0..text_len { out.push(text[j]); }
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if !found {
+                                format(out, "MISSING");
+                            }
+                        }
                         out.push('\n');
                         print(out);
 
                         evidence_pool.clear();
                     }
                 }
+                line_start = i + 1;
             }
-            line_start = i + 1;
+            i += 1;
         }
-        i += 1;
     }
 
     var done_msg: u8[>..] = [];
-    format(done_msg, "\nTotal queries processed: ");
-    format(done_msg, query_count);
+    format(done_msg, "\nTotal repetitions: ");
+    format(done_msg, rep_count);
     done_msg.push('\n');
     print(done_msg);
     print("Done.\n");
