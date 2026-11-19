@@ -1,7 +1,13 @@
-query,terms,result_count,median_ms,p95_ms,min_ms,max_ms,platform
-single_electrode,electrode:0,1171,0.0514,0.1609,0.0001,0.1609,Spark-ARM64
-stimulation_plus_electrode,stimulation electrode:0,381,0.0275,0.0819,0.0001,0.0819,Spark-ARM64
-non_existent_electrode,electrode:999,0,0.0001,0.0008,0.0001,0.0008,Spark-ARM64
-single_electrode,electrode:0,1171,0.1304,0.1519,0.1142,0.1519,Windows-x86_64
-stimulation_plus_electrode,stimulation electrode:0,381,0.0635,0.1235,0.0576,0.1235,Windows-x86_64
-non_existent_electrode,electrode:999,0,0.0002,0.0026,0.0001,0.0026,Windows-x86_64
+query,terms,result_count,median_ms,p95_ms,min_ms,max_ms,platform,system
+single_electrode,electrode:0,1171,0.0514,0.1609,0.0001,0.1609,Spark-ARM64,pure_python_inverted_index
+stimulation_plus_electrode,stimulation electrode:0,381,0.0275,0.0819,0.0001,0.0819,Spark-ARM64,pure_python_inverted_index
+non_existent_electrode,electrode:999,0,0.0001,0.0008,0.0001,0.0008,Spark-ARM64,pure_python_inverted_index
+single_electrode,electrode:0,1171,0.1304,0.1519,0.1142,0.1519,Windows-x86_64,pure_python_inverted_index
+stimulation_plus_electrode,stimulation electrode:0,381,0.0635,0.1235,0.0576,0.1235,Windows-x86_64,pure_python_inverted_index
+non_existent_electrode,electrode:999,0,0.0002,0.0026,0.0001,0.0026,Windows-x86_64,pure_python_inverted_index
+single_electrode,electrode:0,10,1.6709,2.1522,1.6709,2.1522,Spark-ARM64,mitre_rpr_csr
+stimulation_plus_electrode,stimulation electrode:0,10,3.7840,4.5733,3.7840,4.5733,Spark-ARM64,mitre_rpr_csr
+non_existent_electrode,electrode:999,0,1.6844,1.9355,1.6844,1.9355,Spark-ARM64,mitre_rpr_csr
+single_electrode,electrode:0,957,5.8020,27.2097,5.8020,27.2097,Spark-ARM64,mitre_rpr_rpr
+stimulation_plus_electrode,stimulation electrode:0,1701,6.9298,7.1461,6.9298,7.1461,Spark-ARM64,mitre_rpr_rpr
+non_existent_electrode,electrode:999,0,0.0002,0.0008,0.0002,0.0008,Spark-ARM64,mitre_rpr_rpr

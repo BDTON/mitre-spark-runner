@@ -1,0 +1,40 @@
+{
+  "dataset": "fs437",
+  "documents": 30000,
+  "terms": 52746,
+  "queries": [
+    {
+      "label": "single_electrode",
+      "query": "electrode:0",
+      "k": 10,
+      "csr_median_ms": 1.6708659240975976,
+      "csr_p95_ms": 2.152162021957338,
+      "csr_n": 10,
+      "rpr_median_ms": 5.802039988338947,
+      "rpr_p95_ms": 27.2096999688074,
+      "rpr_n": 957
+    },
+    {
+      "label": "stim_plus_electrode",
+      "query": "stimulation electrode:0",
+      "k": 10,
+      "csr_median_ms": 3.7839889992028475,
+      "csr_p95_ms": 4.573269980028272,
+      "csr_n": 10,
+      "rpr_median_ms": 6.929800962097943,
+      "rpr_p95_ms": 7.146121002733707,
+      "rpr_n": 1701
+    },
+    {
+      "label": "known_miss",
+      "query": "electrode:999",
+      "k": 10,
+      "csr_median_ms": 1.6843549674376845,
+      "csr_p95_ms": 1.935490989126265,
+      "csr_n": 0,
+      "rpr_median_ms": 0.00017601996660232544,
+      "rpr_p95_ms": 0.0007520429790019989,
+      "rpr_n": 0
+    }
+  ]
+}
