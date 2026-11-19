@@ -1,0 +1,128 @@
+{
+  "10000": {
+    "corpus_size": 10000,
+    "ingest_ms": 23.9,
+    "queries": [
+      {
+        "desc": "single-term high freq",
+        "median_ms": 4.74,
+        "p95_ms": 4.93,
+        "result_count": 10
+      },
+      {
+        "desc": "single-term med freq",
+        "median_ms": 4.74,
+        "p95_ms": 4.76,
+        "result_count": 10
+      },
+      {
+        "desc": "single-term low freq",
+        "median_ms": 4.74,
+        "p95_ms": 4.76,
+        "result_count": 10
+      },
+      {
+        "desc": "two-term",
+        "median_ms": 0.5,
+        "p95_ms": 0.51,
+        "result_count": 0
+      },
+      {
+        "desc": "three-term",
+        "median_ms": 0.09,
+        "p95_ms": 0.1,
+        "result_count": 0
+      },
+      {
+        "desc": "rare fact",
+        "median_ms": 0.01,
+        "p95_ms": 0.01,
+        "result_count": 0
+      }
+    ]
+  },
+  "100000": {
+    "corpus_size": 100000,
+    "ingest_ms": 277.3,
+    "queries": [
+      {
+        "desc": "single-term high freq",
+        "median_ms": 49.03,
+        "p95_ms": 51.72,
+        "result_count": 10
+      },
+      {
+        "desc": "single-term med freq",
+        "median_ms": 49.11,
+        "p95_ms": 49.55,
+        "result_count": 10
+      },
+      {
+        "desc": "single-term low freq",
+        "median_ms": 49.15,
+        "p95_ms": 49.24,
+        "result_count": 10
+      },
+      {
+        "desc": "two-term",
+        "median_ms": 4.96,
+        "p95_ms": 5.08,
+        "result_count": 0
+      },
+      {
+        "desc": "three-term",
+        "median_ms": 0.7,
+        "p95_ms": 0.75,
+        "result_count": 0
+      },
+      {
+        "desc": "rare fact",
+        "median_ms": 0.01,
+        "p95_ms": 0.01,
+        "result_count": 0
+      }
+    ]
+  },
+  "1000000": {
+    "corpus_size": 1000000,
+    "ingest_ms": 3730.9,
+    "queries": [
+      {
+        "desc": "single-term high freq",
+        "median_ms": 553.95,
+        "p95_ms": 554.99,
+        "result_count": 10
+      },
+      {
+        "desc": "single-term med freq",
+        "median_ms": 553.85,
+        "p95_ms": 556.76,
+        "result_count": 10
+      },
+      {
+        "desc": "single-term low freq",
+        "median_ms": 554.67,
+        "p95_ms": 556.48,
+        "result_count": 10
+      },
+      {
+        "desc": "two-term",
+        "median_ms": 50.21,
+        "p95_ms": 50.54,
+        "result_count": 0
+      },
+      {
+        "desc": "three-term",
+        "median_ms": 6.6,
+        "p95_ms": 6.94,
+        "result_count": 0
+      },
+      {
+        "desc": "rare fact",
+        "median_ms": 0.02,
+        "p95_ms": 0.03,
+        "result_count": 0
+      }
+    ]
+  }
+}

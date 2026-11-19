@@ -1,0 +1,266 @@
+{
+  "10000": {
+    "bm25s": {
+      "corpus_size": 10000,
+      "tokenize_ms": 25.3,
+      "index_ms": 60.2,
+      "queries": [
+        {
+          "desc": "single-term high freq",
+          "median_ms": 0.04,
+          "p95_ms": 0.05,
+          "result_count": 10
+        },
+        {
+          "desc": "single-term med freq",
+          "median_ms": 0.04,
+          "p95_ms": 0.05,
+          "result_count": 10
+        },
+        {
+          "desc": "single-term low freq",
+          "median_ms": 0.04,
+          "p95_ms": 0.05,
+          "result_count": 10
+        },
+        {
+          "desc": "two-term",
+          "median_ms": 0.04,
+          "p95_ms": 0.05,
+          "result_count": 10
+        },
+        {
+          "desc": "three-term",
+          "median_ms": 0.04,
+          "p95_ms": 0.05,
+          "result_count": 10
+        },
+        {
+          "desc": "rare fact",
+          "median_ms": 0.04,
+          "p95_ms": 0.05,
+          "result_count": 3
+        }
+      ]
+    },
+    "rank_bm25": {
+      "corpus_size": 10000,
+      "tokenize_ms": 12.1,
+      "index_ms": 17.6,
+      "queries": [
+        {
+          "desc": "single-term high freq",
+          "median_ms": 0.6,
+          "p95_ms": 0.61,
+          "result_count": 10
+        },
+        {
+          "desc": "single-term med freq",
+          "median_ms": 0.6,
+          "p95_ms": 0.61,
+          "result_count": 10
+        },
+        {
+          "desc": "single-term low freq",
+          "median_ms": 0.63,
+          "p95_ms": 0.63,
+          "result_count": 10
+        },
+        {
+          "desc": "two-term",
+          "median_ms": 1.02,
+          "p95_ms": 1.03,
+          "result_count": 10
+        },
+        {
+          "desc": "three-term",
+          "median_ms": 1.51,
+          "p95_ms": 1.54,
+          "result_count": 10
+        },
+        {
+          "desc": "rare fact",
+          "median_ms": 1.65,
+          "p95_ms": 1.66,
+          "result_count": 3
+        }
+      ]
+    }
+  },
+  "100000": {
+    "bm25s": {
+      "corpus_size": 100000,
+      "tokenize_ms": 260.3,
+      "index_ms": 601.0,
+      "queries": [
+        {
+          "desc": "single-term high freq",
+          "median_ms": 0.14,
+          "p95_ms": 0.16,
+          "result_count": 10
+        },
+        {
+          "desc": "single-term med freq",
+          "median_ms": 0.14,
+          "p95_ms": 0.15,
+          "result_count": 10
+        },
+        {
+          "desc": "single-term low freq",
+          "median_ms": 0.14,
+          "p95_ms": 0.15,
+          "result_count": 10
+        },
+        {
+          "desc": "two-term",
+          "median_ms": 0.14,
+          "p95_ms": 0.15,
+          "result_count": 10
+        },
+        {
+          "desc": "three-term",
+          "median_ms": 0.14,
+          "p95_ms": 0.15,
+          "result_count": 10
+        },
+        {
+          "desc": "rare fact",
+          "median_ms": 0.14,
+          "p95_ms": 0.15,
+          "result_count": 3
+        }
+      ]
+    },
+    "rank_bm25": {
+      "corpus_size": 100000,
+      "tokenize_ms": 139.0,
+      "index_ms": 209.4,
+      "queries": [
+        {
+          "desc": "single-term high freq",
+          "median_ms": 6.91,
+          "p95_ms": 7.68,
+          "result_count": 10
+        },
+        {
+          "desc": "single-term med freq",
+          "median_ms": 6.98,
+          "p95_ms": 8.18,
+          "result_count": 10
+        },
+        {
+          "desc": "single-term low freq",
+          "median_ms": 8.27,
+          "p95_ms": 8.85,
+          "result_count": 10
+        },
+        {
+          "desc": "two-term",
+          "median_ms": 13.41,
+          "p95_ms": 13.69,
+          "result_count": 10
+        },
+        {
+          "desc": "three-term",
+          "median_ms": 23.71,
+          "p95_ms": 25.1,
+          "result_count": 10
+        },
+        {
+          "desc": "rare fact",
+          "median_ms": 20.28,
+          "p95_ms": 20.85,
+          "result_count": 3
+        }
+      ]
+    }
+  },
+  "1000000": {
+    "bm25s": {
+      "corpus_size": 1000000,
+      "tokenize_ms": 2988.7,
+      "index_ms": 6094.0,
+      "queries": [
+        {
+          "desc": "single-term high freq",
+          "median_ms": 1.16,
+          "p95_ms": 1.18,
+          "result_count": 10
+        },
+        {
+          "desc": "single-term med freq",
+          "median_ms": 1.15,
+          "p95_ms": 1.19,
+          "result_count": 10
+        },
+        {
+          "desc": "single-term low freq",
+          "median_ms": 1.15,
+          "p95_ms": 1.16,
+          "result_count": 10
+        },
+        {
+          "desc": "two-term",
+          "median_ms": 1.14,
+          "p95_ms": 1.15,
+          "result_count": 10
+        },
+        {
+          "desc": "three-term",
+          "median_ms": 1.14,
+          "p95_ms": 1.15,
+          "result_count": 10
+        },
+        {
+          "desc": "rare fact",
+          "median_ms": 1.14,
+          "p95_ms": 1.15,
+          "result_count": 3
+        }
+      ]
+    },
+    "rank_bm25": {
+      "corpus_size": 1000000,
+      "tokenize_ms": 1906.3,
+      "index_ms": 2217.5,
+      "queries": [
+        {
+          "desc": "single-term high freq",
+          "median_ms": 84.31,
+          "p95_ms": 84.71,
+          "result_count": 10
+        },
+        {
+          "desc": "single-term med freq",
+          "median_ms": 88.13,
+          "p95_ms": 88.21,
+          "result_count": 10
+        },
+        {
+          "desc": "single-term low freq",
+          "median_ms": 108.84,
+          "p95_ms": 109.4,
+          "result_count": 10
+        },
+        {
+          "desc": "two-term",
+          "median_ms": 149.68,
+          "p95_ms": 149.96,
+          "result_count": 10
+        },
+        {
+          "desc": "three-term",
+          "median_ms": 279.35,
+          "p95_ms": 279.63,
+          "result_count": 10
+        },
+        {
+          "desc": "rare fact",
+          "median_ms": 266.5,
+          "p95_ms": 267.54,
+          "result_count": 3
+        }
+      ]
+    }
+  }
+}

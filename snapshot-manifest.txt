@@ -1,0 +1,61 @@
+MITRE SOURCE SNAPSHOT — TOWER (D:\MITRE) -> LAPPY WORKSPACE
+============================================================
+
+Snapshot source : \\100.113.214.74\D$\MITRE  (Tower host DESKTOP-CH4A70D, user Creb,
+                                              reachable via tailnet 100.113.214.74 from Lappy)
+Snapshot taken  : 2026-11-18, between ~7:29 PM and completion, Lappy local time
+Destination     : C:\Users\Brand\MITRE-Spark-Runner\snapshot\goose\  (894 files)
+Hash manifest   : SHA256SUMS (894 entries, SHA-256, relative forward-slash paths)
+
+Repository identity
+-------------------
+- URL: https://github.com/BDTON/pavona.git
+- Branch checked out on Tower: audit/benchmark-fixes
+- HEAD: b66f0f8679535ff76224a403322b765adc1e085d
+    "Best baseline: Goose JSON parser fixes + MITRE ingest optimization + extended benchmark results"
+- Goal checkpoint 8368e645: 8368e645ac769e0dbc810ccaf6a9c0aa399f02c9
+    "MITRE/PRISM multi-language evaluation: Goose core complete, Zig working, Mojo/Bend blocked"
+    Verified: ancestor of HEAD (merge-base --is-ancestor), reachable on branch audit/benchmark-fixes.
+- Other local branches: master 9cff8764; rpr-implementation 078f96eb; scouting-prototype f487195c
+
+Working-tree note
+-----------------
+Tower's working tree was actively modified during the snapshot window
+(goose/mitre/*.goose mtimes today 2026-11-18). `git status` over SMB did not
+complete (timed out), so formal dirty-change recording is pending. The snapshot
+is a point-in-time file copy, identified by SHA256SUMS, not a git export.
+
+Contents
+--------
+Snapshot of D:\MITRE\goose\ — the Goose implementation of MITRE/PRISM:
+- goose/src/          Goose compiler (C++20): lexer, parser, typecheck, codegen, TinyCC JIT backend, runtime
+- goose/stdlib/       Goose standard library (std, os, math, json, dictionary, binary, slot_pool, slice_pool, ...)
+- goose/mitre/        MITRE retrieval implementation in Goose: core.goose, benchmark.goose (10K/100K),
+                      benchmark_opt.goose, unified_bench.goose (JSON I/O, RPR), quick_bench.goose, mitre_index.gsx
+- goose/cmake/, goose/third_party/, goose/tree-sitter/  build dependencies
+- goose/CMakeLists.txt, goose/README.md, goose/docs/  build and command-line docs
+
+Implementation language: Goose (memory-safe systems language, compiles to C;
+in-process TinyCC runner or gcc-built executable via `goose build`).
+
+Build (Linux, verified toolchain on Spark: gcc-13, cc, make, libc6-dev, Python 3.12.3, pip):
+  cmake -S . -B build   (cmake 3.27+; install via pip if missing)
+  cmake --build build -j $(nproc)
+  ./build/goose run mitre/benchmark.goose      # 10K + 100K corpus, seed 8001
+  ./build/goose run mitre/unified_bench.goose --corpus ... --queries ... --output ...
+
+Related (same Tower D:\ drive, NOT in this snapshot):
+- D:\MITRE\pavona_source\  Python PAVONA/PRIEST MITRE (priest_core/memory/mitre_prism) — separate codebase
+- D:\MITRE-rpr-rdc-20261117.bundle + .delivery.json (verified RPR delivery bundle;
+  implementation_commit 45738deea37b72b32834d495bdb8e6def83a1f39,
+  delivery_commit f6ea8c39876ff1a2e0f5a78ac69a1bc317591589)
+
+Campaign context (Kimi Spark rental)
+------------------------------------
+- Controller: Lappy (verified hostname), Spark: axforge @ 178.105.204.56:22081, user dev,
+  alias axforge-AF-20261118221220-22081 (host key trusted). Spark: Ubuntu 24.04, aarch64,
+  NVIDIA GB10, 20-core Cortex-X925/A725, 121Gi RAM, ~611Gi free on /.
+- Hard deadline: 2026-11-19 04:00 UTC (11:00 p.m. EST Nov 18). Export cutoff: 03:40 UTC.
+- Next: transfer snapshot to Spark (scp), build Goose compiler, run baseline MITRE
+  retrieval benchmarks at 10K/100K, then paired 1M workload; optimize; compare vs
+  BM25S (and time-capped Tantivy/Lucene); export results + manifest + SHA256SUMS to Lappy.
