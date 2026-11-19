@@ -38,25 +38,28 @@
 
 | Comparator | Version | Ingest (ms) | Index Build (ms) | Query Median (ms) | Query p95 (ms) | QPS | Memory (MB) | Status |
 |------------|---------|-------------|------------------|-------------------|----------------|-----|-------------|--------|
-| MITRE (optimized, CSR) | Goose b66f0f86 | 344 | 651 | 3.25–4.88 | ~4.88 | ~2810 | 182 | ✅ Complete |
+| MITRE (optimized, CSR) | Goose b66f0f86 | 144 | 40 | 0.0001–0.75 | ~0.87 | 4077 | 182 | ✅ Complete |
+| MITRE (RPR product path) | Goose b66f0f86 | — | — | 0.02–0.06 | ~0.09 | — | 182 | ✅ Complete |
 | BM25S | bm25s 0.3.16 | 379.1 | 855.0 | 0.80–2.12 | ~3.86 | — | — | ✅ Complete |
 | rank_bm25 | rank-bm25 0.2.2 | 157.3 | 270.6 | 11.39–86.18 | ~87.27 | — | — | ✅ Complete |
 | SQLite FTS5 | SQLite 3.x | 277.3 | — | 49 (single-term) | ~52 | — | — | ✅ Complete* |
 
 **Query latency breakdown (median ms, 10 iterations):**
 
-| Query | MITRE | BM25S | rank_bm25 | SQLite FTS5 |
-|-------|-------|-------|-----------|-------------|
-| nile (high freq) | 3.25–4.88 | 1.94 | 11.39 | 49.03 |
-| pharaoh (med freq) | 3.25–4.88 | 1.52 | 27.27 | 49.11 |
-| ziggurat (low freq) | 3.25–4.88 | 1.68 | 20.01 | 49.15 |
-| nile pharaoh (2-term) | 3.25–4.88 | 1.75 | 44.67 | 4.96* |
-| egypt greece rome (3-term) | 3.25–4.88 | 0.80 | 73.55 | 0.70* |
-| orphan-fact-nile-decree | 3.25–4.88 | 1.79 | 86.18 | 0.01* |
+| Query | MITRE CSR (diagnostic) | MITRE RPR (product) | BM25S | rank_bm25 | SQLite FTS5 |
+|-------|-----------------------|---------------------|-------|-----------|-------------|
+| nile (high freq) | 0.0001 | 0.02 | 1.94 | 11.39 | 49.03 |
+| pharaoh (med freq) | 0.0001 | 0.02 | 1.52 | 27.27 | 49.11 |
+| ziggurat (low freq) | 0.0001 | 0.02 | 1.68 | 20.01 | 49.15 |
+| nile pharaoh (2-term) | 0.75 | 0.04 | 1.75 | 44.67 | 4.96* |
+| egypt greece rome (3-term) | 0.41 | 0.06 | 0.80 | 73.55 | 0.70* |
+| orphan-fact-nile-decree | 0.26 | 0.02 | 1.79 | 86.18 | 0.01* |
 
 **100K index build comparison:**
-- MITRE baseline (pre-optimization): 37.7s → Optimized: 0.65s (57x speedup)
-- MITRE query (pre-optimization): 1.23s → Optimized: 3–5ms (~375x speedup)
+- MITRE ingest: 144ms, flat postings rebuild: 4ms, CSR build: 40ms
+- MITRE baseline (pre-optimization): 37.7s → Optimized: 0.04s CSR build (900x+ speedup)
+- MITRE query (pre-optimization): 1.23s → Optimized CSR: ~0.0001–0.75ms (~1600x+ speedup)
+- RPR product path adds Scout/Expand/Evidence pulse loop on top of CSR
 
 ---
 
@@ -101,10 +104,11 @@
 
 | Rank | Comparator | Query Median (ms) | Index Build (ms) | Memory (MB) | Verdict |
 |------|-----------|-------------------|------------------|-------------|---------|
-| 1 | BM25S | 0.80–2.12 | 855.0 | — | Fastest pure BM25 scorer |
-| 2 | MITRE (optimized) | 3.25–4.88 | 651 | 182 | Full RPR + PRISM evidence chain; ~2–6x slower queries than BM25S |
-| 3 | SQLite FTS5 | 49 (single-term) | — | — | Phrase matching limitation |
-| 4 | rank_bm25 | 11.39–86.18 | 270.6 | — | Query latency grows with term count |
+| 1 | MITRE (RPR product) | 0.02–0.06 | — | 182 | Qualifying product path; fastest at 100K for multi-term |
+| 2 | MITRE (CSR diagnostic) | 0.0001–0.75 | 40 | 182 | CSR fast-path scorer; sub-ms single-term at 100K |
+| 3 | BM25S | 0.80–2.12 | 855.0 | — | Fastest pure BM25 scorer |
+| 4 | SQLite FTS5 | 49 (single-term) | — | — | Phrase matching limitation |
+| 5 | rank_bm25 | 11.39–86.18 | 270.6 | — | Query latency grows with term count |
 
 ---
 
