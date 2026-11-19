@@ -1,0 +1,180 @@
+nile	10
+document	10
+test	10
+with	10
+terms	10
+egypt	10
+greece	10
+mesopotamia	10
+persia	10
+rome	10
+pharaoh	10
+river	10
+ziggurat	10
+cyrus	10
+legion	10
+nile pharaoh	10
+ziggurat cyrus	10
+egypt greece	10
+rome legion	10
+nile river	10
+pharaoh ziggurat	10
+mesopotamia persia	10
+cyrus legion	10
+nile egypt	10
+pharaoh rome	10
+egypt greece rome	10
+nile pharaoh ziggurat	10
+cyrus legion river	10
+mesopotamia persia rome	10
+nile egypt pharaoh	10
+orphan-fact-nile-decree	3
+mesopotamia	3
+ziggurat	3
+cyrus	3
+ziggurat pharaoh	10
+ziggurat test	10
+ziggurat 0	10
+ziggurat nile	10
+ziggurat egypt	10
+ziggurat terms	10
+ziggurat river	10
+ziggurat legion	10
+ziggurat with	10
+ziggurat document	10
+ziggurat 1	10
+ziggurat mesopotamia	10
+ziggurat 2	10
+ziggurat 3	10
+ziggurat rome	10
+ziggurat greece	10
+ziggurat 4	10
+ziggurat 5	10
+pharaoh test	10
+pharaoh 0	10
+pharaoh nile	10
+pharaoh egypt	10
+pharaoh terms	10
+pharaoh river	10
+pharaoh cyrus	10
+pharaoh legion	10
+pharaoh with	10
+pharaoh document	10
+pharaoh 1	10
+pharaoh mesopotamia	10
+pharaoh 2	10
+pharaoh 3	10
+pharaoh greece	10
+pharaoh 4	10
+pharaoh 5	10
+test 0	10
+test nile	10
+test egypt	10
+test terms	10
+test river	10
+test cyrus	10
+test legion	10
+test with	10
+test document	10
+test 1	10
+test mesopotamia	10
+test 2	10
+test 3	10
+test rome	10
+test greece	10
+test 4	10
+test 5	10
+0 nile	10
+0 egypt	10
+0 terms	10
+0 river	10
+0 cyrus	10
+0 legion	10
+0 with	10
+0 document	10
+nile terms	10
+nile cyrus	10
+nile legion	10
+nile with	10
+nile document	10
+nile 1	10
+nile mesopotamia	10
+nile 2	10
+nile 3	10
+nile rome	10
+nile greece	10
+nile 4	10
+nile 5	10
+egypt terms	10
+egypt river	10
+egypt cyrus	10
+egypt legion	10
+egypt with	10
+egypt document	10
+egypt 2	10
+egypt 5	10
+terms river	10
+terms cyrus	10
+terms legion	10
+terms with	10
+terms document	10
+terms 1	10
+terms mesopotamia	10
+terms 2	10
+terms 3	10
+terms rome	10
+terms greece	10
+terms 4	10
+terms 5	10
+river cyrus	10
+river legion	10
+river with	10
+river document	10
+river 1	10
+river mesopotamia	10
+river 2	10
+river 3	10
+river rome	10
+river greece	10
+river 4	10
+river 5	10
+cyrus with	10
+cyrus document	10
+cyrus 1	10
+cyrus mesopotamia	10
+cyrus 2	10
+cyrus 3	10
+cyrus rome	10
+cyrus greece	10
+cyrus 4	10
+cyrus 5	10
+legion with	10
+legion document	10
+legion 1	10
+legion mesopotamia	10
+legion 2	10
+legion 3	10
+legion rome	10
+legion greece	10
+legion 4	10
+legion 5	10
+with document	10
+with 1	10
+with mesopotamia	10
+with 2	10
+with 3	10
+with rome	10
+with greece	10
+with 4	10
+with 5	10
+document 1	10
+document mesopotamia	10
+document 2	10
+document 3	10
+document rome	10
+document greece	10
+document 4	10
+document 5	10
+1 mesopotamia	10
+3 rome	10
+greece 4	10
