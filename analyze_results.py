@@ -2,12 +2,17 @@
 """
 Analyze locked test results v2: combine BM25S + RPR Mite (Goose) data with 3 reps,
 compute paired 95% CIs, recall@10, failed queries, and assess the pass rule.
+Usage: analyze_results.py [goose_results_file]  (default: goose_locked_results_v2.txt)
 """
 import json
 import math
 import statistics
+import sys
 from collections import defaultdict
 from scipy import stats
+
+# Optional input file argument
+goose_results_file = sys.argv[1] if len(sys.argv) > 1 else 'goose_locked_results_v2.txt'
 
 # =====================================================================
 # LOAD BM25S RESULTS
@@ -35,7 +40,7 @@ with open('question_map.json', 'r') as f:
 
 goose_reps = defaultdict(list)  # key=(query, k) -> list of rep results
 
-with open('goose_locked_results_v2.txt', 'r') as f:
+with open(goose_results_file, 'r') as f:
     lines = f.readlines()
 
 # Skip header lines until we find the data header
@@ -66,15 +71,39 @@ for line in lines[data_start:]:
     rpr_failed = int(parts[10])
     rpr_events = int(parts[11])
 
-    # CSR doc IDs (part 12)
-    csr_doc_ids = []
-    if len(parts) > 12 and parts[12]:
-        csr_doc_ids = [int(x) for x in parts[12].split(',') if x]
+    # Detect profiling columns: when RPR_PROFILE=1, 5 extra columns
+    # (rpr_setup_ms, rpr_scorebuf_ms, rpr_eventq_ms, rpr_sort_ms, passage_ms)
+    # are inserted between rpr_events (11) and csr_doc_ids.
+    profiling = len(parts) > 15
+    if profiling:
+        csr_doc_ids_idx = 17
+        rpr_doc_ids_idx = 18
+    else:
+        csr_doc_ids_idx = 12
+        rpr_doc_ids_idx = 13
 
-    # RPR doc IDs (part 13) - top-10
+    # CSR doc IDs
+    csr_doc_ids = []
+    if len(parts) > csr_doc_ids_idx and parts[csr_doc_ids_idx]:
+        csr_doc_ids = [int(x) for x in parts[csr_doc_ids_idx].split(',') if x]
+
+    # RPR doc IDs (top-10)
     rpr_doc_ids = []
-    if len(parts) > 13 and parts[13]:
-        rpr_doc_ids = [int(x) for x in parts[13].split(',') if x]
+    if len(parts) > rpr_doc_ids_idx and parts[rpr_doc_ids_idx]:
+        rpr_doc_ids = [int(x) for x in parts[rpr_doc_ids_idx].split(',') if x]
+
+    # Profiling breakdown
+    rpr_setup_ms = None
+    rpr_scorebuf_ms = None
+    rpr_eventq_ms = None
+    rpr_sort_ms = None
+    passage_ms = None
+    if profiling:
+        rpr_setup_ms = float(parts[12]) if parts[12] else None
+        rpr_scorebuf_ms = float(parts[13]) if parts[13] else None
+        rpr_eventq_ms = float(parts[14]) if parts[14] else None
+        rpr_sort_ms = float(parts[15]) if parts[15] else None
+        passage_ms = float(parts[16]) if parts[16] else None
 
     key = (query, k)
     goose_reps[key].append({
@@ -90,6 +119,11 @@ for line in lines[data_start:]:
         'csr_failed': csr_failed,
         'rpr_failed': rpr_failed,
         'rpr_events': rpr_events,
+        'rpr_setup_ms': rpr_setup_ms,
+        'rpr_scorebuf_ms': rpr_scorebuf_ms,
+        'rpr_eventq_ms': rpr_eventq_ms,
+        'rpr_sort_ms': rpr_sort_ms,
+        'passage_ms': passage_ms,
         'csr_doc_ids': csr_doc_ids,
         'rpr_doc_ids': rpr_doc_ids,
     })
@@ -135,6 +169,11 @@ for key, reps in goose_reps.items():
         'rpr_n_returned': median_rep['rpr_n_returned'],
         'csr_failed': csr_failed_any,
         'rpr_failed': rpr_failed_any,
+        'rpr_setup_ms_median': statistics.median([r['rpr_setup_ms'] for r in reps_sorted if r['rpr_setup_ms'] is not None]) if any(r['rpr_setup_ms'] is not None for r in reps_sorted) else None,
+        'rpr_scorebuf_ms_median': statistics.median([r['rpr_scorebuf_ms'] for r in reps_sorted if r['rpr_scorebuf_ms'] is not None]) if any(r['rpr_scorebuf_ms'] is not None for r in reps_sorted) else None,
+        'rpr_eventq_ms_median': statistics.median([r['rpr_eventq_ms'] for r in reps_sorted if r['rpr_eventq_ms'] is not None]) if any(r['rpr_eventq_ms'] is not None for r in reps_sorted) else None,
+        'rpr_sort_ms_median': statistics.median([r['rpr_sort_ms'] for r in reps_sorted if r['rpr_sort_ms'] is not None]) if any(r['rpr_sort_ms'] is not None for r in reps_sorted) else None,
+        'passage_ms_median': statistics.median([r['passage_ms'] for r in reps_sorted if r['passage_ms'] is not None]) if any(r['passage_ms'] is not None for r in reps_sorted) else None,
         'csr_doc_ids': median_rep['csr_doc_ids'],
         'rpr_doc_ids': median_rep['rpr_doc_ids'],
     }
@@ -178,6 +217,11 @@ for key, agg in goose_agg.items():
             'goose_rpr_failed': agg['rpr_failed'],
             'goose_rpr_recall_at_10': rpr_recall,
             'goose_rpr_events': agg['rpr_events_median'],
+            'goose_rpr_setup_ms': agg['rpr_setup_ms_median'],
+            'goose_rpr_scorebuf_ms': agg['rpr_scorebuf_ms_median'],
+            'goose_rpr_eventq_ms': agg['rpr_eventq_ms_median'],
+            'goose_rpr_sort_ms': agg['rpr_sort_ms_median'],
+            'goose_passage_ms': agg['passage_ms_median'],
         })
 
 print(f"Matched queries: {len(matched)}")
@@ -300,6 +344,34 @@ print(f"  RPR Mite p95 max: {max(goose_rpr_p95s):.4f}ms")
 goose_events = [m['goose_rpr_events'] for m in matched]
 print(f"  RPR Mite events median: {statistics.median(goose_events):.0f}")
 print(f"  RPR Mite events max: {max(goose_events):.0f}")
+
+# Profiling breakdown (only when profiling data available)
+profiling_available = any(m['goose_rpr_setup_ms'] is not None for m in matched)
+if profiling_available:
+    print("\n" + "=" * 70)
+    print("RPR PROFILING BREAKDOWN (median ms per component)")
+    print("=" * 70)
+    setup = [m['goose_rpr_setup_ms'] for m in matched if m['goose_rpr_setup_ms'] is not None]
+    scorebuf = [m['goose_rpr_scorebuf_ms'] for m in matched if m['goose_rpr_scorebuf_ms'] is not None]
+    eventq = [m['goose_rpr_eventq_ms'] for m in matched if m['goose_rpr_eventq_ms'] is not None]
+    sort = [m['goose_rpr_sort_ms'] for m in matched if m['goose_rpr_sort_ms'] is not None]
+    passage = [m['goose_passage_ms'] for m in matched if m['goose_passage_ms'] is not None]
+    print(f"  rpr_search setup (Scout pushes): median={statistics.median(setup):.4f}ms, max={max(setup):.4f}ms")
+    print(f"  rpr_pulse score-buffer init:    median={statistics.median(scorebuf):.4f}ms, max={max(scorebuf):.4f}ms")
+    print(f"  rpr_pulse event-queue work:     median={statistics.median(eventq):.4f}ms, max={max(eventq):.4f}ms")
+    print(f"  rpr_pulse candidate sort:       median={statistics.median(sort):.4f}ms, max={max(sort):.4f}ms")
+    print(f"  passage fetch (doc lookup):     median={statistics.median(passage):.4f}ms, max={max(passage):.4f}ms")
+    total_profile = statistics.median(setup) + statistics.median(scorebuf) + statistics.median(eventq) + statistics.median(sort)
+    print(f"  Sum of rpr_pulse components:    median={total_profile:.4f}ms")
+
+# Save detailed results - add profiling fields
+for m in matched:
+    if m['goose_rpr_setup_ms'] is not None:
+        m['rpr_setup_ms'] = m['goose_rpr_setup_ms']
+        m['rpr_scorebuf_ms'] = m['goose_rpr_scorebuf_ms']
+        m['rpr_eventq_ms'] = m['goose_rpr_eventq_ms']
+        m['rpr_sort_ms'] = m['goose_rpr_sort_ms']
+        m['passage_ms'] = m['goose_passage_ms']
 
 # =====================================================================
 # TYPE BREAKDOWN

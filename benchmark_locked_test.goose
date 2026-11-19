@@ -474,6 +474,15 @@ var rpr_queue: RPR_Event[>..] = [];
 var rpr_head: u32 = 0;
 var rpr_events_processed: u32 = 0;
 
+// Profiling instrumentation (enabled via RPR_PROFILE=1 env var)
+var profiling_enabled: bool = false;
+var rpr_setup_lats: f64[>..] = [];    // rpr_search queue setup (Scout pushes)
+var rpr_scorebuf_lats: f64[>..] = []; // rpr_pulse score-buffer init
+var rpr_eventq_lats: f64[>..] = [];   // rpr_pulse event-queue processing
+var rpr_sort_lats: f64[>..] = [];     // rpr_pulse candidate sorting
+var compare_mismatches: u32 = 0;      // bounded top-k vs full sort mismatches
+var compare_debug_count: u32 = 0;     // debug counter for first few mismatches
+
 fn rpr_queue_clear() {
     rpr_queue.clear();
     rpr_head = 0;
@@ -523,11 +532,107 @@ fn rpr_pulse(max_events: u32) -> SearchResult[>..] {
     var results: SearchResult[>..] = [];
     var processed = 0;
 
+    // Score-buffer initialization timing
+    var sb_start: f64 = 0.0;
+    if profiling_enabled { sb_start = clock_ns(); }
+
     let max_docs = doc_pool.len as u32;
     var doc_scores: f32[>..] = [];
     for _ in 0..max_docs + 1 { doc_scores.push(0.0); }
     var active_docs: u32[>..] = [];
 
+    if profiling_enabled {
+        let sb_end = clock_ns();
+        rpr_scorebuf_lats.push((sb_end - sb_start) as f64 / 1_000_000.0);
+    }
+
+    // Event-queue processing timing
+    var eq_start: f64 = 0.0;
+    if profiling_enabled { eq_start = clock_ns(); }
+
+    while processed < max_events && rpr_queue_len() > 0 {
+        let event = rpr_queue_pop();
+        processed += 1;
+
+        match event {
+            Scout s => rpr_scout_term(s.term_idx, s.depth, s.budget),
+            Expand e => rpr_expand(e.post_idx, e.depth),
+            Evidence e => {
+                let idx = e.doc_id as i64;
+                if doc_scores[idx] == 0.0 {
+                    active_docs.push(e.doc_id as u32);
+                }
+                doc_scores[idx] += e.score;
+            },
+            Pulse p => {
+                if p.wave_id == 0 { break; }
+            },
+        }
+    }
+
+    if profiling_enabled {
+        let eq_end = clock_ns();
+        rpr_eventq_lats.push((eq_end - eq_start) as f64 / 1_000_000.0);
+    }
+
+    rpr_events_processed = processed as u32;
+
+    for did in active_docs {
+        let idx = did as i64;
+        let score = doc_scores[idx];
+        if score > 0.0 {
+            var ev = EvidenceEntry { doc_id: did as u64, score: score, next_evidence: 0 };
+            let ev_idx = evidence_pool.len as u32;
+            evidence_pool.push(ev);
+            results.push(SearchResult {
+                doc_id: did as u64,
+                score: score,
+                evidence_chain: ev_idx,
+            });
+        }
+    }
+
+    // Candidate sorting timing
+    var sort_start: f64 = 0.0;
+    if profiling_enabled { sort_start = clock_ns(); }
+
+    for i in 1..results.len {
+        let key = results[i];
+        var j = i - 1;
+        while j >= 0 && results[j].score < key.score {
+            results[j + 1] = results[j];
+            j -= 1;
+        }
+        results[j + 1] = key;
+    }
+
+    if profiling_enabled {
+        let sort_end = clock_ns();
+        rpr_sort_lats.push((sort_end - sort_start) as f64 / 1_000_000.0);
+    }
+
+    return results;
+}
+
+// =====================================================================
+// RPR WITH BOUNDED TOP-K SELECTION (optimization candidate)
+// =====================================================================
+// Replaces full insertion sort (O(n^2)) with bounded top-k selection (O(n*k)),
+// preserving exact results and tie-breaking (score desc, doc_id asc for ties).
+
+var rpr_bounded_sort_lats: f64[>..] = [];
+
+fn rpr_pulse_bounded(max_events: u32, top_k: u32) -> SearchResult[>..] {
+    var results: SearchResult[>..] = [];
+    var processed = 0;
+
+    // Score-buffer initialization
+    let max_docs = doc_pool.len as u32;
+    var doc_scores: f32[>..] = [];
+    for _ in 0..max_docs + 1 { doc_scores.push(0.0); }
+    var active_docs: u32[>..] = [];
+
+    // Event-queue processing
     while processed < max_events && rpr_queue_len() > 0 {
         let event = rpr_queue_pop();
         processed += 1;
@@ -550,6 +655,7 @@ fn rpr_pulse(max_events: u32) -> SearchResult[>..] {
 
     rpr_events_processed = processed as u32;
 
+    // Build unsorted results
     for did in active_docs {
         let idx = did as i64;
         let score = doc_scores[idx];
@@ -565,20 +671,45 @@ fn rpr_pulse(max_events: u32) -> SearchResult[>..] {
         }
     }
 
-    for i in 1..results.len {
-        let key = results[i];
-        var j = i - 1;
-        while j >= 0 && results[j].score < key.score {
-            results[j + 1] = results[j];
-            j -= 1;
+    // Bounded top-k selection sort (O(n*k) instead of O(n^2)),
+    // preserves insertion order for tied scores (matches stable sort).
+    var sort_start: f64 = 0.0;
+    if profiling_enabled { sort_start = clock_ns(); }
+
+    let n: u32 = results.len as u32;
+    let limit: u32 = if top_k < n { top_k } else { n };
+    var used: bool[>..] = [];
+    for _ in 0..n { used.push(false); }
+    var bounded: SearchResult[>..] = [];
+    for i in 0..limit {
+        var best_idx: i64 = -1;
+        var j: i64 = 0;
+        while j < n as i64 {
+            if !used[j] {
+                if best_idx == -1 || results[j].score > results[best_idx].score {
+                    best_idx = j;
+                }
+                // Equal scores: keep earlier index (lower j) = insertion order
+            }
+            j += 1;
         }
-        results[j + 1] = key;
+        if best_idx == -1 { break; }
+        used[best_idx] = true;
+        bounded.push(results[best_idx]);
     }
 
-    return results;
+    if profiling_enabled {
+        let sort_end = clock_ns();
+        rpr_bounded_sort_lats.push((sort_end - sort_start) as f64 / 1_000_000.0);
+    }
+
+    return bounded;
 }
 
 fn rpr_search(query_terms: const u8[:][:], max_events: u32 = 10000) -> SearchResult[>..] {
+    var setup_start: f64 = 0.0;
+    if profiling_enabled { setup_start = clock_ns(); }
+
     rpr_queue_clear();
 
     for qterm in query_terms {
@@ -591,7 +722,34 @@ fn rpr_search(query_terms: const u8[:][:], max_events: u32 = 10000) -> SearchRes
         });
     }
 
+    if profiling_enabled {
+        let setup_end = clock_ns();
+        rpr_setup_lats.push((setup_end - setup_start) as f64 / 1_000_000.0);
+    }
+
     return rpr_pulse(max_events);
+}
+
+fn rpr_search_bounded(query_terms: const u8[:][:], max_events: u32 = 10000, top_k: u32 = 10) -> SearchResult[>..] {
+    var setup_start: f64 = 0.0;
+    rpr_queue_clear();
+
+    for qterm in query_terms {
+        let term_idx = term_index.get(make_term_key(qterm));
+        if !term_idx { continue; }
+        rpr_queue_push(RPR_Event.Scout {
+            term_idx: term_idx,
+            depth: 0,
+            budget: 1000,
+        });
+    }
+
+    if profiling_enabled {
+        let setup_end = clock_ns();
+        rpr_setup_lats.push((setup_end - setup_start) as f64 / 1_000_000.0);
+    }
+
+    return rpr_pulse_bounded(max_events, top_k);
 }
 
 // =====================================================================
@@ -623,6 +781,7 @@ fn generate_corpus(n: u32, seed: u64) -> DocInput[>..] {
 // =====================================================================
 
 fn median_of(latencies: f64[>..]) -> f64 {
+    if latencies.len == 0 { return 0.0; }
     var sorted: f64[>..] = [];
     for l in latencies { sorted.push(l); }
     for a in 1..sorted.len {
@@ -638,6 +797,7 @@ fn median_of(latencies: f64[>..]) -> f64 {
 }
 
 fn p95_of(latencies: f64[>..]) -> f64 {
+    if latencies.len == 0 { return 0.0; }
     var sorted: f64[>..] = [];
     for l in latencies { sorted.push(l); }
     for a in 1..sorted.len {
@@ -660,6 +820,21 @@ fn p95_of(latencies: f64[>..]) -> f64 {
 fn main() {
     print("MITRE/PRISM Locked Test — Goose on labeled questions\n");
     print("====================================================\n\n");
+
+    // Check for profiling mode
+    var prof_buf: u8[>..] = [];
+    if env("RPR_PROFILE", prof_buf) {
+        profiling_enabled = true;
+        print("Profiling mode enabled\n");
+    }
+
+    // Check for compare mode (bounded top-k vs full sort)
+    var cmp_buf: u8[>..] = [];
+    var compare_enabled: bool = false;
+    if env("RPR_COMPARE", cmp_buf) {
+        compare_enabled = true;
+        print("Compare mode enabled\n");
+    }
 
     // Generate corpus
     print("Generating corpus (100K, seed 8001)...\n");
@@ -767,6 +942,18 @@ fn main() {
     format(hdr, "rpr_failed");
     hdr.push('\t');
     format(hdr, "rpr_events");
+    if profiling_enabled {
+        hdr.push('\t');
+        format(hdr, "rpr_setup_ms");
+        hdr.push('\t');
+        format(hdr, "rpr_scorebuf_ms");
+        hdr.push('\t');
+        format(hdr, "rpr_eventq_ms");
+        hdr.push('\t');
+        format(hdr, "rpr_sort_ms");
+        hdr.push('\t');
+        format(hdr, "passage_ms");
+    }
     hdr.push('\n');
     print(hdr);
 
@@ -812,6 +999,14 @@ fn main() {
                         for j in 0..qtext.len { qbuf.push(qtext[j]); }
                         let qterms = tokenize(qbuf[..]);
 
+                        // Clear per-query profiling arrays
+                        if profiling_enabled {
+                            rpr_setup_lats.clear();
+                            rpr_scorebuf_lats.clear();
+                            rpr_eventq_lats.clear();
+                            rpr_sort_lats.clear();
+                        }
+
                         // CSR diagnostic - 10 iterations
                         var csr_lats: f64[>..] = [];
                         var csr_doc_ids: u64[>..] = [];
@@ -832,6 +1027,7 @@ fn main() {
                         var rpr_lats: f64[>..] = [];
                         var rpr_doc_ids: u64[>..] = [];
                         var rpr_failed = false;
+                        var passage_lats: f64[>..] = [];
                         for _ in 0..10 {
                             let start = clock_ns();
                             let results = rpr_search(qterms, 10000);
@@ -843,6 +1039,51 @@ fn main() {
                         }
                         let rpr_median = median_of(copy(rpr_lats));
                         let rpr_p95 = p95_of(copy(rpr_lats));
+
+                        // Profiling medians
+                        var rpr_setup_median: f64 = 0.0;
+                        var rpr_scorebuf_median: f64 = 0.0;
+                        var rpr_eventq_median: f64 = 0.0;
+                        var rpr_sort_median: f64 = 0.0;
+                        var passage_median: f64 = 0.0;
+                        if profiling_enabled {
+                            rpr_setup_median = median_of(copy(rpr_setup_lats));
+                            rpr_scorebuf_median = median_of(copy(rpr_scorebuf_lats));
+                            rpr_eventq_median = median_of(copy(rpr_eventq_lats));
+                            rpr_sort_median = median_of(copy(rpr_sort_lats));
+                            passage_median = median_of(copy(passage_lats));
+                        }
+
+                        // Compare mode: bounded top-10 vs full sort
+                        if compare_enabled {
+                            let bounded_results = rpr_search_bounded(qterms, 10000, 10);
+                            var mismatch = false;
+                            let n_bound: u32 = bounded_results.len as u32;
+                            let n_full: u32 = rpr_doc_ids.len as u32;
+                            let cmp_count = if n_bound < n_full { n_bound } else { n_full };
+                            for ci in 0..cmp_count {
+                                if bounded_results[ci as i64].doc_id != rpr_doc_ids[ci] {
+                                    mismatch = true;
+                                    if compare_debug_count < 5 {
+                                        compare_debug_count += 1;
+                                        var dbg: u8[>..] = [];
+                                        format(dbg, "  DEBUG ci=");
+                                        format(dbg, ci);
+                                        format(dbg, " bounded=");
+                                        format(dbg, bounded_results[ci as i64].doc_id);
+                                        format(dbg, " full=");
+                                        format(dbg, rpr_doc_ids[ci]);
+                                        format(dbg, "\n");
+                                        print(dbg);
+                                    }
+                                    break;
+                                }
+                            }
+                            if mismatch {
+                                compare_mismatches += 1;
+                            }
+                            evidence_pool.clear();
+                        }
 
                         // Output result line - concatenate values without {} placeholders
                         var out: u8[>..] = [];
@@ -869,6 +1110,19 @@ fn main() {
                         format(out, if rpr_failed { 1 } else { 0 });
                         out.push('\t');
                         format(out, rpr_events_processed);
+                        // Profiling breakdown (only when RPR_PROFILE=1)
+                        if profiling_enabled {
+                            out.push('\t');
+                            format(out, rpr_setup_median);
+                            out.push('\t');
+                            format(out, rpr_scorebuf_median);
+                            out.push('\t');
+                            format(out, rpr_eventq_median);
+                            out.push('\t');
+                            format(out, rpr_sort_median);
+                            out.push('\t');
+                            format(out, passage_median);
+                        }
                         // CSR doc IDs (top-k, comma-separated)
                         out.push('\t');
                         for di in 0..csr_doc_ids.len {
@@ -883,6 +1137,8 @@ fn main() {
                             format(out, rpr_doc_ids[di]);
                         }
                         // Passage text: top 10 readable source passages with IDs (| separated)
+                        var passage_start: f64 = 0.0;
+                        if profiling_enabled { passage_start = clock_ns(); }
                         out.push('\t');
                         let passage_count = if rpr_top10 < 10 { rpr_top10 } else { 10 };
                         for di in 0..passage_count {
@@ -906,6 +1162,10 @@ fn main() {
                                 format(out, "MISSING");
                             }
                         }
+                        if profiling_enabled {
+                            let passage_end = clock_ns();
+                            passage_lats.push((passage_end - passage_start) as f64 / 1_000_000.0);
+                        }
                         out.push('\n');
                         print(out);
 
@@ -924,4 +1184,13 @@ fn main() {
     done_msg.push('\n');
     print(done_msg);
     print("Done.\n");
+
+    if compare_enabled {
+        var cmp_msg: u8[>..] = [];
+        format(cmp_msg, "\nCompare mode: bounded top-10 vs full sort\n");
+        format(cmp_msg, "  Mismatches: ");
+        format(cmp_msg, compare_mismatches);
+        cmp_msg.push('\n');
+        print(cmp_msg);
+    }
 }
